@@ -4,7 +4,7 @@
  * This is deliberately NOT a raw EXIF/XMP tag map. It models the fields that
  * answer engines and search crawlers actually read about an image, and the
  * library maps them onto the correct XMP namespaces (dc:, photoshop:,
- * Iptc4xmpCore:, xmpRights:) under the hood.
+ * Iptc4xmpCore:, Iptc4xmpExt:, xmpRights:) under the hood.
  */
 export interface ImageMetadata {
   /** Human/AI-readable caption: "what is this image". Maps to dc:description (x-default). */
@@ -34,7 +34,58 @@ export interface ImageMetadata {
   licensor?: { url: string; name?: string };
   /** Explicit copyright notice, distinct from `rights`. Maps to photoshop:Copyright. */
   copyrightNotice?: string;
+  /**
+   * How the image came to be — an IRI from the IPTC Digital Source Type
+   * vocabulary (https://cv.iptc.org/newscodes/digitalsourcetype/). Maps to
+   * Iptc4xmpExt:DigitalSourceType. This is the field ecosystems key off to
+   * label an image as AI-generated: set it to
+   * `DIGITAL_SOURCE_TYPE.trainedAlgorithmicMedia` alongside the `ai` fields.
+   */
+  digitalSourceType?: string;
+  /**
+   * AI-generation provenance (IPTC Photo Metadata Standard 2025.1, Extension
+   * schema). Per IPTC guidance, also set `digitalSourceType` and leave
+   * `creator` empty for fully AI-generated images — the prompt writer is
+   * explicitly not the image creator.
+   */
+  ai?: {
+    /**
+     * Prompt(s) given to the generative AI service, including negative
+     * prompts and model parameters if you wish. Maps to
+     * Iptc4xmpExt:AIPromptInformation.
+     */
+    prompt?: string;
+    /** Name of the person who wrote the prompt. Maps to Iptc4xmpExt:AIPromptWriterName. */
+    promptWriter?: string;
+    /**
+     * The AI engine and/or model used, e.g. "DALL-E via Bing Image Creator".
+     * Maps to Iptc4xmpExt:AISystemUsed.
+     */
+    system?: string;
+    /** Version of the AI system, if known. Maps to Iptc4xmpExt:AISystemVersionUsed. */
+    systemVersion?: string;
+  };
 }
+
+/**
+ * Common IRIs from the IPTC "Digital Source Type" NewsCodes vocabulary, for
+ * use as `ImageMetadata.digitalSourceType`. Not exhaustive — any IRI from
+ * https://cv.iptc.org/newscodes/digitalsourcetype/ is valid.
+ */
+export const DIGITAL_SOURCE_TYPE = {
+  /** Generated purely by an AI model from prompts — the standard "AI-generated" disclosure. */
+  trainedAlgorithmicMedia:
+    "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+  /** Composite that includes AI-generated elements. */
+  compositeWithTrainedAlgorithmicMedia:
+    "http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia",
+  /** Composite of captured and synthetic elements. */
+  compositeSynthetic:
+    "http://cv.iptc.org/newscodes/digitalsourcetype/compositeSynthetic",
+  /** Original photograph from a digital camera. */
+  digitalCapture:
+    "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture",
+} as const;
 
 export type ImageFormat =
   | "webp"

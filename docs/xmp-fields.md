@@ -5,10 +5,11 @@ XMP namespaces, and why each field matters for answer engines and search.
 
 > **Conformance:** metadata is written as an **Adobe XMP** packet (not legacy
 > IPTC-IIM). Fields follow the [IPTC Photo Metadata Standard 2025.1](https://iptc.org/standards/photo-metadata/iptc-standard/)
-> (descriptive + accessibility + rights/licensing subset), plus Dublin Core,
-> Adobe (`photoshop:`/`xmpRights:`), and PLUS (`plus:`, ns 1.0). `AltTextAccessibility`
-> dates to IPTC 2021.1. The 2025.1 AI-generation provenance properties are not
-> yet implemented.
+> (descriptive + accessibility + rights/licensing + AI-provenance subset), plus
+> Dublin Core, Adobe (`photoshop:`/`xmpRights:`), and PLUS (`plus:`, ns 1.0).
+> `AltTextAccessibility` dates to IPTC 2021.1; the four AI-generation
+> provenance properties were added in IPTC 2025.1 (exiftool names them from
+> **13.40**).
 
 ## Mapping
 
@@ -24,6 +25,11 @@ XMP namespaces, and why each field matters for answer engines and search.
 | `copyrightNotice` | `photoshop:Copyright` | simple text | `http://ns.adobe.com/photoshop/1.0/` |
 | `licenseUrl` | `xmpRights:WebStatement` | simple URI | `http://ns.adobe.com/xap/1.0/rights/` |
 | `licensor` | `plus:Licensor` (→ `plus:LicensorName` / `plus:LicensorURL`) | `rdf:Seq` of resources | `http://ns.useplus.org/ldf/xmp/1.0/` |
+| `digitalSourceType` | `Iptc4xmpExt:DigitalSourceType` | simple IRI | `http://iptc.org/std/Iptc4xmpExt/2008-02-29/` |
+| `ai.prompt` | `Iptc4xmpExt:AIPromptInformation` | simple text | `http://iptc.org/std/Iptc4xmpExt/2008-02-29/` |
+| `ai.promptWriter` | `Iptc4xmpExt:AIPromptWriterName` | simple text | `http://iptc.org/std/Iptc4xmpExt/2008-02-29/` |
+| `ai.system` | `Iptc4xmpExt:AISystemUsed` | simple text | `http://iptc.org/std/Iptc4xmpExt/2008-02-29/` |
+| `ai.systemVersion` | `Iptc4xmpExt:AISystemVersionUsed` | simple text | `http://iptc.org/std/Iptc4xmpExt/2008-02-29/` |
 
 The last three are the fields Google Images reads for the **Licensable** feature:
 `licenseUrl` + `licensor` (plus `creator`/`credit`/`copyrightNotice`) produce the
@@ -54,6 +60,27 @@ interoperability with Adobe tools, Google, and IPTC-aware software:
   precise terms beat twenty vague ones.
 - **`creator`/`credit`/`rights`** feed provenance and licensing signals, which
   increasingly factor into whether an engine will cite or display an image.
+
+## AI-generated images (IPTC 2025.1)
+
+The four `ai.*` fields are the IPTC 2025.1 AI-generation provenance properties
+(all plain, single-valued text in the Extension schema). IPTC's
+[user guide](https://www.iptc.org/std/photometadata/documentation/userguide/#_applying_metadata_to_ai_generated_images)
+recommends:
+
+- **Always set `digitalSourceType`** alongside them —
+  `trainedAlgorithmicMedia` for fully AI-generated images,
+  `compositeWithTrainedAlgorithmicMedia` / `compositeSynthetic` for composites.
+  This IRI is what downstream tools key off to label an image as AI-generated.
+  The `DIGITAL_SOURCE_TYPE` export has the common values.
+- **Leave `creator` empty** for fully AI-generated images. The prompt writer
+  (`ai.promptWriter`) is explicitly *not* the image creator.
+- `ai.prompt` may include negative prompts and model parameters;
+  `ai.system` may name both the UI and the model (e.g. "DALL-E via Bing Image
+  Creator") with the version in `ai.systemVersion`.
+
+These fields supersede IPTC's earlier interim guidance of tagging the prompt
+writer via a Contributor role.
 
 ## Example packet
 

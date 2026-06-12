@@ -16,6 +16,7 @@ const NS = {
   xmpRights: "http://ns.adobe.com/xap/1.0/rights/",
   photoshop: "http://ns.adobe.com/photoshop/1.0/",
   Iptc4xmpCore: "http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/",
+  Iptc4xmpExt: "http://iptc.org/std/Iptc4xmpExt/2008-02-29/",
   plus: "http://ns.useplus.org/ldf/xmp/1.0/",
 } as const;
 
@@ -36,6 +37,11 @@ function altLang(tag: string, value: string): string {
     `    </rdf:Alt>\n` +
     `   </${tag}>\n`
   );
+}
+
+/** A simple text/URI property (photoshop:Credit, the Iptc4xmpExt AI fields). */
+function simpleEl(tag: string, value: string): string {
+  return `   <${tag}>${esc(value)}</${tag}>\n`;
 }
 
 /** An unordered array property (dc:subject / keywords). */
@@ -85,18 +91,25 @@ export function serializeXmp(meta: ImageMetadata): string {
   if (meta.rights) props.push(altLang("dc:rights", meta.rights));
   if (meta.altText)
     props.push(altLang("Iptc4xmpCore:AltTextAccessibility", meta.altText));
-  if (meta.credit)
-    props.push(`   <photoshop:Credit>${esc(meta.credit)}</photoshop:Credit>\n`);
+  if (meta.credit) props.push(simpleEl("photoshop:Credit", meta.credit));
   if (meta.copyrightNotice)
-    props.push(
-      `   <photoshop:Copyright>${esc(meta.copyrightNotice)}</photoshop:Copyright>\n`,
-    );
+    props.push(simpleEl("photoshop:Copyright", meta.copyrightNotice));
   if (meta.licenseUrl)
-    props.push(
-      `   <xmpRights:WebStatement>${esc(meta.licenseUrl)}</xmpRights:WebStatement>\n`,
-    );
+    props.push(simpleEl("xmpRights:WebStatement", meta.licenseUrl));
   if (meta.licensor?.url)
     props.push(licensorSeq(meta.licensor.url, meta.licensor.name));
+  // IPTC Extension: digital source type + 2025.1 AI-generation provenance.
+  // All five are plain single-valued text/URI properties per the spec.
+  if (meta.digitalSourceType)
+    props.push(simpleEl("Iptc4xmpExt:DigitalSourceType", meta.digitalSourceType));
+  if (meta.ai?.prompt)
+    props.push(simpleEl("Iptc4xmpExt:AIPromptInformation", meta.ai.prompt));
+  if (meta.ai?.promptWriter)
+    props.push(simpleEl("Iptc4xmpExt:AIPromptWriterName", meta.ai.promptWriter));
+  if (meta.ai?.system)
+    props.push(simpleEl("Iptc4xmpExt:AISystemUsed", meta.ai.system));
+  if (meta.ai?.systemVersion)
+    props.push(simpleEl("Iptc4xmpExt:AISystemVersionUsed", meta.ai.systemVersion));
 
   const xmlns = Object.entries(NS)
     .map(([prefix, uri]) => `    xmlns:${prefix}="${uri}"`)

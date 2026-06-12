@@ -47,7 +47,7 @@ Today, writing XMP into modern web image formats from JavaScript means one of:
 
 - 📦 **Zero runtime dependencies** — pure TypeScript over `Uint8Array`/`DataView`.
 - 🖼️ **Byte-preserving** — splices metadata only; compressed image data is copied verbatim, never re-encoded.
-- 🧠 **Semantic, AEO-oriented API** — you write `description`/`keywords`/`altText`, not raw tag IDs. We map them onto the correct XMP namespaces (`dc:`, `photoshop:`, `Iptc4xmpCore:`, `xmpRights:`).
+- 🧠 **Semantic, AEO-oriented API** — you write `description`/`keywords`/`altText`, not raw tag IDs. We map them onto the correct XMP namespaces (`dc:`, `photoshop:`, `Iptc4xmpCore:`, `Iptc4xmpExt:`, `xmpRights:`).
 - ☁️ **Runs anywhere** — Node, Deno, Bun, Cloudflare Workers, Vercel/Netlify/Lambda edge functions. No `fs` required; operates on buffers.
 - 🔒 **Privacy-friendly** — `removeMetadata()` strips XMP/EXIF in one call (keeps ICC colour profile).
 - 🧩 **ESM, fully typed** — and `require()`-able on Node ≥ 20.19 / 22.12.
@@ -78,17 +78,18 @@ In short: the **documented, here-today** win is portable, machine-readable **att
 
 `aeo-image` writes metadata as an **Adobe XMP** packet (the modern serialization) — **not** the legacy IPTC-IIM binary block. This is what Google and current tooling read.
 
-Fields conform to the **[IPTC Photo Metadata Standard 2025.1](https://iptc.org/standards/photo-metadata/iptc-standard/)** (the current revision), specifically the descriptive, accessibility, and rights/licensing subset, across these namespaces:
+Fields conform to the **[IPTC Photo Metadata Standard 2025.1](https://iptc.org/standards/photo-metadata/iptc-standard/)** (the current revision), specifically the descriptive, accessibility, rights/licensing, and AI-provenance subset, across these namespaces:
 
 | Namespace | Prefix | Used for |
 | --- | --- | --- |
 | Dublin Core | `dc:` | description, title, subject/keywords, creator, rights |
 | IPTC Core | `Iptc4xmpCore:` | `AltTextAccessibility` (IPTC **2021.1**+) |
+| IPTC Extension | `Iptc4xmpExt:` | digital source type + AI-generation provenance (IPTC **2025.1**) |
 | Adobe Photoshop | `photoshop:` | credit, copyright |
 | XMP Rights | `xmpRights:` | web statement (license URL) |
 | PLUS | `plus:` (ns 1.0) | licensor (license-acquisition link) |
 
-**Not yet implemented:** IPTC 2025.1's AI-generation provenance properties (AI Prompt Information, AI System Used, …) — tracked in the roadmap.
+This includes IPTC 2025.1's four **AI-generation provenance** properties (`AIPromptInformation`, `AIPromptWriterName`, `AISystemUsed`, `AISystemVersionUsed`) plus `DigitalSourceType` — see [Label AI-generated images](#label-ai-generated-images). Readable by exiftool (named tags from **13.40**). C2PA / Content Credentials (cryptographically signed manifests) are a separate standard and out of scope.
 
 ## Install
 
@@ -127,6 +128,29 @@ const output = writeMetadata(input, {
   rights: "© 2026 Example Studio",
 });
 writeFileSync("photo.tagged.webp", output);
+```
+
+### Label AI-generated images
+
+IPTC Photo Metadata 2025.1 added four AI-provenance fields, which pair with
+`DigitalSourceType` — the field ecosystems read to label an image as
+AI-generated:
+
+```ts
+import { writeMetadata, DIGITAL_SOURCE_TYPE } from "aeo-image";
+
+const output = writeMetadata(input, {
+  description: "A neon-lit street market at night in the rain",
+  digitalSourceType: DIGITAL_SOURCE_TYPE.trainedAlgorithmicMedia,
+  ai: {
+    prompt: "neon street market, rain reflections, cinematic 35mm",
+    promptWriter: "Jane Doe",
+    system: "DALL-E via Bing Image Creator",
+    systemVersion: "3",
+  },
+  // Per IPTC guidance, leave `creator` empty for fully AI-generated images —
+  // the prompt writer is explicitly not the image creator.
+});
 ```
 
 ### Strip (privacy)
@@ -168,6 +192,8 @@ detectFormat(buf); // "webp" | "jpeg" | "png" | "avif" | "heic" | "unknown"
 | `copyrightNotice` | `string` | `photoshop:Copyright` |
 | `licenseUrl` | `string` | `xmpRights:WebStatement` — *Google Licensable* |
 | `licensor` | `{ url, name? }` | IPTC PLUS `plus:Licensor` — *Google "Get this image" link* |
+| `digitalSourceType` | `string` (IRI) | `Iptc4xmpExt:DigitalSourceType` — *AI-generated disclosure*; use `DIGITAL_SOURCE_TYPE.*` |
+| `ai` | `{ prompt?, promptWriter?, system?, systemVersion? }` | IPTC 2025.1 `Iptc4xmpExt:AIPromptInformation` / `AIPromptWriterName` / `AISystemUsed` / `AISystemVersionUsed` |
 
 The last three implement the fields Google Images reads for the **Licensable** badge and license link. All functions return a **new** buffer and never mutate the input. See [`docs/xmp-fields.md`](docs/xmp-fields.md) for the complete field/namespace reference and AEO rationale.
 

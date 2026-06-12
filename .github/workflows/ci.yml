@@ -105,3 +105,30 @@ jobs:
           exiftool interop.heic | grep -q "CI interop heic" \
             && echo "✅ HEIC XMP round-trip verified by exiftool" \
             || (echo "❌ HEIC XMP not found by exiftool" && exit 1)
+      - name: IPTC 2025.1 AI provenance — verify exiftool reads the new tags
+        run: |
+          node --input-type=module -e "
+          import { writeMetadata, DIGITAL_SOURCE_TYPE } from './src/index.ts';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const b = new Uint8Array(readFileSync('test/fixtures/sample.jpg'));
+          const out = writeMetadata(b, {
+            digitalSourceType: DIGITAL_SOURCE_TYPE.trainedAlgorithmicMedia,
+            ai: {
+              prompt: 'CI neon market prompt',
+              promptWriter: 'CI Prompt Writer',
+              system: 'CI Diffusion',
+              systemVersion: '9.9',
+            },
+          });
+          writeFileSync('interop-ai.jpg', out);
+          "
+          # exiftool >= 13.40 knows the 2025.1 AI tags by name; older versions
+          # (e.g. Ubuntu's packaged build) still surface them via -u as unknown
+          # XMP properties. -u keeps this green either way; values prove it.
+          exiftool -ver
+          exiftool -u -G1 interop-ai.jpg
+          for needle in "CI neon market prompt" "CI Prompt Writer" "CI Diffusion" "trainedAlgorithmicMedia"; do
+            exiftool -u interop-ai.jpg | grep -q "$needle" \
+              && echo "✅ exiftool reads: $needle" \
+              || (echo "❌ exiftool missing: $needle" && exit 1)
+          done

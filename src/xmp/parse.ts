@@ -90,5 +90,21 @@ export function parseXmp(xmp: string): ImageMetadata {
       : { url: licensorUrl };
   }
 
+  const digitalSourceType = simple(xmp, "Iptc4xmpExt:DigitalSourceType");
+  if (digitalSourceType) meta.digitalSourceType = digitalSourceType;
+
+  // IPTC 2025.1 AI-generation provenance — only attach `ai` if any field is present.
+  const aiPrompt = simple(xmp, "Iptc4xmpExt:AIPromptInformation");
+  const aiPromptWriter = simple(xmp, "Iptc4xmpExt:AIPromptWriterName");
+  const aiSystem = simple(xmp, "Iptc4xmpExt:AISystemUsed");
+  const aiSystemVersion = simple(xmp, "Iptc4xmpExt:AISystemVersionUsed");
+  if (aiPrompt || aiPromptWriter || aiSystem || aiSystemVersion) {
+    meta.ai = {};
+    if (aiPrompt) meta.ai.prompt = aiPrompt;
+    if (aiPromptWriter) meta.ai.promptWriter = aiPromptWriter;
+    if (aiSystem) meta.ai.system = aiSystem;
+    if (aiSystemVersion) meta.ai.systemVersion = aiSystemVersion;
+  }
+
   return meta;
 }

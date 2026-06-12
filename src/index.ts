@@ -2,6 +2,7 @@ import {
   type ImageMetadata,
   type ImageFormat,
   UnsupportedFormatError,
+  DIGITAL_SOURCE_TYPE,
 } from "./types.ts";
 import {
   isWebp,
@@ -28,7 +29,7 @@ import { serializeXmp } from "./xmp/serialize.ts";
 import { parseXmp } from "./xmp/parse.ts";
 
 export type { ImageMetadata, ImageFormat };
-export { UnsupportedFormatError };
+export { UnsupportedFormatError, DIGITAL_SOURCE_TYPE };
 export { serializeXmp, parseXmp };
 
 function dataU32(buf: Uint8Array, o: number): number {

@@ -6,6 +6,26 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-11
+
+### Added
+- **IPTC 2025.1 AI-generation provenance fields**: nested `ai` object —
+  `prompt` (`Iptc4xmpExt:AIPromptInformation`), `promptWriter`
+  (`Iptc4xmpExt:AIPromptWriterName`), `system` (`Iptc4xmpExt:AISystemUsed`),
+  `systemVersion` (`Iptc4xmpExt:AISystemVersionUsed`). All plain, single-valued
+  text properties in the IPTC Extension schema, verified against the 2025.1
+  spec. Round-trip across all 5 formats; exiftool interop in CI (named tags
+  from exiftool 13.40). Closes #2.
+- **`digitalSourceType`** (`Iptc4xmpExt:DigitalSourceType`) — the IPTC Digital
+  Source Type IRI that downstream tools read to label an image as
+  AI-generated; the companion field IPTC says to set alongside the `ai`
+  properties. New `DIGITAL_SOURCE_TYPE` export with the common vocabulary
+  values (`trainedAlgorithmicMedia`, `compositeWithTrainedAlgorithmicMedia`,
+  `compositeSynthetic`, `digitalCapture`).
+- Docs: "Label AI-generated images" usage section, updated Standards &
+  conformance (AI properties now implemented), and IPTC guidance notes (leave
+  `creator` empty for fully AI-generated images; prompt writer ≠ creator).
+
 ## [1.1.1] - 2026-06-01
 
 ### Added
