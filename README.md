@@ -1,3 +1,17 @@
+<div align="center">
+<pre>
+ █████╗  ███████╗  ██████╗    ██╗ ███╗   ███╗  █████╗   ██████╗  ███████╗
+██╔══██╗ ██╔════╝ ██╔═══██╗   ██║ ████╗ ████║ ██╔══██╗ ██╔════╝  ██╔════╝
+███████║ █████╗   ██║   ██║   ██║ ██╔████╔██║ ███████║ ██║  ███╗ █████╗
+██╔══██║ ██╔══╝   ██║   ██║   ██║ ██║╚██╔╝██║ ██╔══██║ ██║   ██║ ██╔══╝
+██║  ██║ ███████╗ ╚██████╔╝   ██║ ██║ ╚═╝ ██║ ██║  ██║ ╚██████╔╝ ███████╗
+╚═╝  ╚═╝ ╚══════╝  ╚═════╝    ╚═╝ ╚═╝     ╚═╝ ╚═╝  ╚═╝  ╚═════╝  ╚══════╝
+</pre>
+
+<h3>⚡ Machine-Readable Images for AI Answer Engines ⚡</h3>
+
+</div>
+
 # aeo-image
 
 > Write descriptive + rights metadata — captions, keywords, alt text, creator, license — into **WebP, AVIF, HEIC, JPEG & PNG** so your images are **self-describing**: Google Images reads embedded IPTC metadata ([and recommends embedding it](https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata)), and the description travels with the file as images get downloaded, indexed, and ingested by AI pipelines. The only pure-JS, **zero-dependency** library that writes XMP to AVIF/HEIC. **Byte-preserving** (never re-encodes). Runs on Node, Bun, Deno & edge.
